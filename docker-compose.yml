@@ -1,0 +1,41 @@
+services:
+    test-slava:
+        container_name: test-tanuki
+        build:
+            context: .
+            dockerfile: docker/Dockerfile
+            args:
+                WWWGROUP: '${WWWGROUP:-1000}'
+                WWWUSER: '${WWWUSER:-1000}'
+        image: test-tanuki
+        restart: unless-stopped
+        tty: true
+        depends_on:
+            - db
+        ports:
+            - "8032:80"
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - test-tanuki
+
+    db:
+        container_name: postgres
+        image: postgres:15.3
+        volumes:
+            - db:/var/lib/postgresql/data
+            - ./docker/db/init-test/payments:/home/init-test
+        environment:
+            - POSTGRES_USER=db
+            - POSTGRES_PASSWORD=db
+            - POSTGRES_DB=test-tanuki
+        ports:
+            - "54320:5432"
+        networks:
+            - test-tanuki
+
+volumes:
+    db:
+networks:
+    test-tanuki:
+        name: test-tanuki
