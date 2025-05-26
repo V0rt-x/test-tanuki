@@ -11,6 +11,11 @@ class Cart extends Model
 {
     protected $fillable = ['user_id'];
 
+    public function discount(): BelongsTo
+    {
+        return $this->belongsTo(Discount::class);
+    }
+
     public function promocode(): BelongsTo
     {
         return $this->belongsTo(Promocode::class);

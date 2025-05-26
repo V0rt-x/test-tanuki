@@ -27,7 +27,7 @@ class OrderCreateHandler
      */
     public function handle(OrderCreateCommand $command): void
     {
-        $cart = $this->cartRepository->unorderedWithProductsAndPromocodeByUserId($command->userId);
+        $cart = $this->cartRepository->getUnorderedByUserId($command->userId, ['cartProducts', 'promocode.discount']);
         if (null === $cart) {
             throw new CartNotFoundException(sprintf('Cart for user "%s" not found.', $command->userId));
         }

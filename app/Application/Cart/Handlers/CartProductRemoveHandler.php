@@ -30,7 +30,7 @@ class CartProductRemoveHandler
      */
     public function handle(CartProductRemoveCommand $command): void
     {
-        $cart = $this->cartRepository->unorderedWithProductsAndPromocode($command->cartId);
+        $cart = $this->cartRepository->getUnordered($command->cartId, ['cartProducts', 'promocode.discount']);
         if (null === $cart) {
             throw new CartNotFoundException(sprintf('Cart with id: "%s" not found.', $command->cartId));
         }
@@ -42,7 +42,7 @@ class CartProductRemoveHandler
         }
 
         if ($cart->isChanged()) {
-            $cart = $this->discountCalculatorService->calculateCart($cart);
+            $this->discountCalculatorService->calculateCart($cart);
             $this->cartRepository->save($cart);
         }
     }

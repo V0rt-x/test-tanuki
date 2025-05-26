@@ -6,7 +6,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class PromocodeResource extends JsonResource
+class DiscountResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,9 +16,8 @@ class PromocodeResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->resource->getId(),
-            'code' => $this->resource->getCode(),
-            'discount' => DiscountResource::make($this->resource->getDiscount()),
+            'type' => $this->resource->getType()->value,
+            'value' => $this->resource->getValue(),
         ];
     }
 }

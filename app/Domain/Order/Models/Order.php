@@ -30,4 +30,9 @@ class Order
     {
         return $this->cart;
     }
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
 }

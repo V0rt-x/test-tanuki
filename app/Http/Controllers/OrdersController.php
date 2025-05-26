@@ -12,7 +12,7 @@ use App\Domain\Order\Exceptions\CartCannotBeOrderedException;
 use App\Domain\Order\Exceptions\OrderNotFoundException;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderGetRequest;
-use Illuminate\Http\JsonResponse;
+use App\Http\Resources\OrderResource;
 use Illuminate\Http\Response;
 
 class OrdersController extends Controller
@@ -42,13 +42,13 @@ class OrdersController extends Controller
     /**
      * @param OrderGetRequest $request
      * @param OrderGetHandler $handler
-     * @return JsonResponse
+     * @return OrderResource
      * @throws OrderNotFoundException
      */
     public function get(
         OrderGetRequest $request,
         OrderGetHandler $handler,
-    ): JsonResponse
+    ): OrderResource
     {
         $command = new OrderGetCommand(
             $request->validated('order_id'),
@@ -56,8 +56,6 @@ class OrdersController extends Controller
 
         $order = $handler->handle($command);
 
-        return response()->json([
-            ''
-        ]);
+        return OrderResource::make($order);
     }
 }

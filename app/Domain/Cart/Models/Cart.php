@@ -22,7 +22,9 @@ class Cart
      * @param int|null $id
      * @param int|null $orderId
      * @param array<CartProduct> $cartProducts
+     * @param int|null $discountId
      * @param int|null $promocodeId
+     * @param Discount|null $discount
      * @param Promocode|null $promocode
      */
     public function __construct(
@@ -30,7 +32,9 @@ class Cart
         private ?int       $id = null,
         private ?int       $orderId = null,
         private array      $cartProducts = [],
+        private ?int       $discountId = null,
         private ?int       $promocodeId = null,
+        private ?Discount  $discount = null,
         private ?Promocode $promocode = null,
     )
     {
@@ -51,6 +55,19 @@ class Cart
     }
 
     /**
+     * @return Discount|null
+     * @throws DependencyNotLoadedException
+     */
+    public function getDiscount(): ?Discount
+    {
+        if ($this->discountId !== null && $this->discount === null) {
+            throw new DependencyNotLoadedException('Discount not loaded for cart.');
+        }
+
+        return $this->discount;
+    }
+
+    /**
      * @return Promocode|null
      * @throws DependencyNotLoadedException
      */
@@ -67,7 +84,7 @@ class Cart
     {
         foreach ($this->cartProducts as $cartProduct) {
             if ($cartProduct->getProductId() === $productId) {
-                return $cartProduct;
+                return clone $cartProduct;
             }
         }
 
@@ -100,9 +117,16 @@ class Cart
         $this->cartProducts[] = $newCartProduct->setCartId($this->id);
     }
 
+    /**
+     * Обновляет данные о товаре по product_id
+     * @param CartProduct $updatingCartProduct
+     * @return void
+     */
     public function updateProduct(CartProduct $updatingCartProduct): void
     {
         $this->changed();
+
+        $updatingCartProduct->setCartId($this->id);
 
         $cartProducts = [];
         foreach ($this->cartProducts as $cartProduct) {
@@ -132,6 +156,28 @@ class Cart
     }
 
     /**
+     * Проверяет, привязана ли к корзине скидка
+     * @return bool
+     */
+    public function hasDiscount(): bool
+    {
+        return null !== $this->discountId;
+    }
+
+    /**
+     * Добавляет скидку для применения. Чтобы применить, нужно вызвать applyDiscount()
+     * @param Discount $discount
+     * @return void
+     */
+    public function setDiscount(Discount $discount): void
+    {
+        $this->changed();
+
+        $this->discountId = $discount->getId();
+        $this->discount = $discount;
+    }
+
+    /**
      * Проверяет, привязан ли к корзине промокод
      * @return bool
      */
@@ -153,6 +199,14 @@ class Cart
         $this->promocode = $promocode;
     }
 
+    public function removeDiscount(): void
+    {
+        $this->changed();
+
+        $this->discountId = null;
+        $this->discount = null;
+    }
+
     public function removePromocode(): void
     {
         $this->changed();
@@ -161,21 +215,21 @@ class Cart
         $this->promocode = null;
     }
 
-    public function totalBaseSum(): int
+    public function getTotalBaseSum(): int
     {
         return array_reduce($this->cartProducts, function ($carry, CartProduct $cartProduct) {
             return $carry + $cartProduct->getBasePrice() * $cartProduct->getQuantity();
         }, 0);
     }
 
-    public function totalFinalSum(): int
+    public function getTotalFinalSum(): int
     {
         return array_reduce($this->cartProducts, function ($carry, CartProduct $cartProduct) {
             return $carry + $cartProduct->getFinalPrice() * $cartProduct->getQuantity();
         }, 0);
     }
 
-    public function totalQuantity(): int
+    public function getTotalQuantity(): int
     {
         return array_reduce($this->cartProducts, function ($carry, CartProduct $cartProduct) {
             return $carry + $cartProduct->getQuantity();
@@ -189,42 +243,38 @@ class Cart
      */
     public function applyPromocode(): bool
     {
+        $this->removeDiscount();
+
         $promocode = $this->getPromocode();
+
         if (null === $promocode) {
             return false;
         }
 
-        if (null === $promocode->getDiscount()) {
-            throw new DiscountInapplicableException(sprintf('Discount cannot be loaded for promocode "%s".', $promocode->getCode()));
-        }
-
-        $this->applyDiscount($promocode->getDiscount());
+        $promocode->applyToCart($this);
 
         return true;
     }
 
     /**
-     * @param Discount $discount
-     * @return void
+     * Применяет скидку к товарам в корзине
+     * @return bool
+     * @throws DependencyNotLoadedException
      * @throws DiscountInapplicableException
      */
-    public function applyDiscount(Discount $discount): void
+    public function applyDiscount(): bool
     {
-        if ($discount->getType() === DiscountType::ABSOLUTE) {
-            $discountPerCartProduct = (int)($discount->getValue() / $this->totalQuantity());
+        $this->removePromocode();
 
-            foreach ($this->cartProducts as $cartProduct) {
-                $cartProduct->applyAbsoluteDiscount($discountPerCartProduct);
-            }
-        } elseif ($discount->getType() === DiscountType::PERCENT) {
-            $discountPercent = $discount->getValue();
+        $discount = $this->getDiscount();
 
-            foreach ($this->cartProducts as $cartProduct) {
-                $cartProduct->applyPercentDiscount($discountPercent);
-            }
-        } else {
-            throw new DiscountInapplicableException(sprintf('Discount type "%s" is not valid.', $discount->getType()->value));
+        if (null === $discount) {
+            return false;
         }
+
+        $discount->applyToCart($this);
+
+        return true;
     }
 
     /**
@@ -270,6 +320,8 @@ class Cart
 
     public function canBeOrdered(): bool
     {
-        return !$this->isOrdered() && $this->totalFinalSum() >= self::MIN_TOTAL_FINAL_PRICE;
+        $sum = $this->getTotalFinalSum() !== 0 ? $this->getTotalFinalSum() : $this->getTotalBaseSum();
+
+        return !$this->isOrdered() && $sum >= self::MIN_TOTAL_FINAL_PRICE;
     }
 }

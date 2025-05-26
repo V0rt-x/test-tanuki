@@ -24,7 +24,7 @@ class CartGetByFilterHandler
      */
     public function handle(CartGetByFilterCommand $command): Cart
     {
-        $cart = $this->cartRepository->unorderedWithProductsAndPromocodeByUserId($command->userId);
+        $cart = $this->cartRepository->getUnorderedByUserId($command->userId, ['cartProducts', 'promocode.discount']);
         if (null === $cart) {
             throw new CartNotFoundException(sprintf('Cart for user "%s" not found.', $command->userId));
         }

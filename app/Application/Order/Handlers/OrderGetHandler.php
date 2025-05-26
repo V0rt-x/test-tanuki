@@ -26,7 +26,7 @@ class OrderGetHandler
         OrderGetCommand $command,
     ): Order
     {
-        $orderId = $this->orderRepository->getWithCartAndDependencies($command->orderId);
+        $orderId = $this->orderRepository->get($command->orderId, ['cart.cartProducts', 'cart.promocode.discount', 'cart.discount']);
         if (null === $orderId) {
             throw new OrderNotFoundException(sprintf('Order with id "%s" not found', $command->orderId));
         }

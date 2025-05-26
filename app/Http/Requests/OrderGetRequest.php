@@ -30,7 +30,7 @@ class OrderGetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'order_id' => 'required|int|min:1',
         ];
     }
 }

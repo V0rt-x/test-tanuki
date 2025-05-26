@@ -16,8 +16,8 @@ class OrderResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->resource->id,
-            'phone' => $this->resource->phone,
+            'id' => $this->resource->getId(),
+            'phone' => $this->resource->getPhone(),
             'cart' => CartResource::make($this->resource->getCart()),
         ];
     }

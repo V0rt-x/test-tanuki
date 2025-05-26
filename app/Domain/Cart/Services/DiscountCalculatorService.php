@@ -19,26 +19,46 @@ class DiscountCalculatorService
 
     /**
      * @param Cart $cart
-     * @return Cart
-     * @throws DiscountInapplicableException
+     * @return bool
      * @throws DependencyNotLoadedException
+     * @throws DiscountInapplicableException
      */
-    public function calculateCart(Cart $cart): Cart
+    public function calculateCart(Cart $cart): bool
     {
         $cart->resetDiscounts();
 
-        if ($cart->getPromocode()->isApplicable() && $cart->applyPromocode()) {
-            return $cart;
+        if ($this->applyPromocodeToCart($cart)) {
+            return true;
         }
 
-        $discount = $this->discountRepository->getGreatestApplicableWithoutPromocodes($cart->totalBaseSum());
+        return $this->applyDiscountToCart($cart);
+    }
 
-        if ($discount) {
-            $cart->applyDiscount($discount);
+    /**
+     * @param Cart $cart
+     * @return bool
+     * @throws DependencyNotLoadedException
+     * @throws DiscountInapplicableException
+     */
+    private function applyPromocodeToCart(Cart $cart): bool
+    {
+        return $cart->applyPromocode();
+    }
 
-            return $cart;
+    /**
+     * @param Cart $cart
+     * @return bool
+     * @throws DependencyNotLoadedException
+     * @throws DiscountInapplicableException
+     */
+    private function applyDiscountToCart(Cart $cart): bool
+    {
+        $discount = $this->discountRepository->getGreatestApplicableWithoutPromocodes($cart->getTotalBaseSum());
+        if (null == $discount) {
+            return false;
         }
 
-        return $cart;
+        $cart->setDiscount($discount);
+        return $cart->applyDiscount();
     }
 }

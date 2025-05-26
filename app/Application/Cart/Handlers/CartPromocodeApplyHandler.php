@@ -39,7 +39,7 @@ class CartPromocodeApplyHandler
             throw new PromocodeNotFoundException(sprintf('Promocode "%s" not found', $command->promocode));
         }
 
-        $cart = $this->cartRepository->unorderedWithProductsAndPromocode($command->cartId);
+        $cart = $this->cartRepository->getUnordered($command->cartId, ['cartProducts', 'promocode.discount']);
         if (null === $cart) {
             throw new CartNotFoundException(sprintf('Cart "%s" not found', $command->cartId));
         }
@@ -51,7 +51,7 @@ class CartPromocodeApplyHandler
         $cart->setPromocode($promocode);
 
         if ($cart->isChanged()) {
-            $cart = $this->discountCalculatorService->calculateCart($cart);
+            $this->discountCalculatorService->calculateCart($cart);
             $this->cartRepository->save($cart);
         }
     }

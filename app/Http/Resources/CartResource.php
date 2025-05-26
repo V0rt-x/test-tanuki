@@ -21,7 +21,7 @@ class CartResource extends JsonResource
             'user_id' => $this->resource->getUserId(),
             'cart_products' => CartProductResource::collection($this->resource->getCartProducts()),
             'promocode' => $this->resource->getPromocode() ? PromocodeResource::make($this->resource->getPromocode()) : null,
-            'discount' => [], // TODO
+            'discount' => $this->resource->getDiscount() ? DiscountResource::make($this->resource->getDiscount()) : null,
             'total_base_sum' => $this->resource->totalBaseSum(),
             'total_final_sum' => $this->resource->totalFinalSum(),
         ];

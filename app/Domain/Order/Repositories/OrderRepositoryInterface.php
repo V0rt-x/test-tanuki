@@ -9,7 +9,5 @@ interface OrderRepositoryInterface
 {
     public function create(Order $order);
 
-    public function getWithCart(int $orderId): ?Order;
-
-    public function getWithCartAndDependencies(int $orderId): ?Order;
+    public function get(int $orderId, array $with = []): ?Order;
 }

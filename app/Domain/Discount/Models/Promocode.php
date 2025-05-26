@@ -3,24 +3,20 @@ declare(strict_types=1);
 
 namespace App\Domain\Discount\Models;
 
+use App\Domain\Cart\Exceptions\DependencyNotLoadedException;
+use App\Domain\Cart\Exceptions\DiscountInapplicableException;
+use App\Domain\Cart\Models\Cart;
+
 class Promocode
 {
-    private ?Discount $discount = null;
-
     public function __construct(
-        private string $code,
-        private int    $discountId,
-        private ?int   $id = null,
+        private string   $code,
+        private int      $discountId,
+        private ?int     $id = null,
+        private ?Discount $discount = null,
     )
     {
 
-    }
-
-    public function setDiscount(?Discount $discount): self
-    {
-        $this->discount = $discount;
-
-        return $this;
     }
 
     public function getId(): ?int
@@ -38,13 +34,25 @@ class Promocode
         return $this->discountId;
     }
 
+    /**
+     * @return Discount|null
+     * @throws DependencyNotLoadedException
+     */
     public function getDiscount(): ?Discount
     {
+        if ($this->discountId !== null && $this->discount === null) {
+            throw new DependencyNotLoadedException('Discount not loaded for promocode.');
+        }
+
         return $this->discount;
     }
 
-    public function isApplicable(): bool
+    /**
+     * @throws DiscountInapplicableException
+     * @throws DependencyNotLoadedException
+     */
+    public function applyToCart(Cart $cart): void
     {
-        return null !== $this->getDiscount();
+        $this->getDiscount()->applyToCart($cart);
     }
 }

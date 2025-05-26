@@ -22,7 +22,7 @@ class CartGetHandler
      */
     public function handle(CartGetCommand $command): Cart
     {
-        $cart = $this->cartRepository->unorderedWithProductsAndPromocode($command->cartId);
+        $cart = $this->cartRepository->getUnordered($command->cartId, ['cartProducts', 'promocode.discount', 'discount']);
         if (null === $cart) {
             throw new CartNotFoundException(sprintf('Cart %s not found', $command->cartId));
         }

@@ -3,13 +3,18 @@ declare(strict_types=1);
 
 namespace App\Application\Cart\Mappers;
 
+use App\Application\Discount\Mappers\DiscountMapper;
+use App\Application\Discount\Mappers\PromocodeMapper;
 use App\Domain\Cart\Models\Cart;
 use App\Domain\Cart\Models\CartProduct;
-use App\Domain\Discount\Models\Promocode;
+use App\Domain\Discount\Exceptions\ExcessiveDiscountValueException;
 use App\Infrastructure\Eloquent\Models\Cart as EloquentCart;
 
 class CartMapper
 {
+    /**
+     * @throws ExcessiveDiscountValueException
+     */
     public static function fromEloquent(EloquentCart $eloquentCart): Cart
     {
         if ($eloquentCart->relationLoaded('cartProducts')) {
@@ -24,11 +29,22 @@ class CartMapper
         }
 
         if ($eloquentCart->relationLoaded('promocode') && $eloquentCart->promocode !== null) {
-            $promocode = new Promocode(
-                $eloquentCart->promocode->code,
-                $eloquentCart->promocode->discount_id,
-                $eloquentCart->promocode->id,
+            $promocode = PromocodeMapper::fromEloquent($eloquentCart->promocode);
+
+            return new Cart(
+                $eloquentCart->user_id,
+                $eloquentCart->id,
+                $eloquentCart->order_id,
+                $cartProducts ?? [],
+                $eloquentCart->discount_id,
+                $eloquentCart->promocode_id,
+                null,
+                $promocode,
             );
+        }
+
+        if ($eloquentCart->relationLoaded('discount') && $eloquentCart->discount !== null) {
+            $discount = DiscountMapper::fromEloquent($eloquentCart->discount);
         }
 
         return new Cart(
@@ -36,8 +52,9 @@ class CartMapper
             $eloquentCart->id,
             $eloquentCart->order_id,
             $cartProducts ?? [],
+            $eloquentCart->discount_id,
             $eloquentCart->promocode_id,
-            $promocode ?? null,
+            $discount ?? null,
         );
     }
 }

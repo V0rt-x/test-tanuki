@@ -28,16 +28,9 @@ class EloquentOrderRepository implements OrderRepositoryInterface
         });
     }
 
-    public function getWithCart(int $orderId): ?Order
+    public function get(int $orderId, array $with = []): ?Order
     {
-        $eloquentOrder = EloquentOrder::with('cart')->where('id', $orderId)->first();
-
-        return $eloquentOrder ? $this->eloquentToDomain($eloquentOrder) : null;
-    }
-
-    public function getWithCartAndDependencies(int $orderId): ?Order
-    {
-        $eloquentOrder = EloquentOrder::with(['cart.cartProducts', 'cart.promocode.discount'])->where('id', $orderId)->first();
+        $eloquentOrder = EloquentOrder::with($with)->where('id', $orderId)->first();
 
         return $eloquentOrder ? $this->eloquentToDomain($eloquentOrder) : null;
     }
