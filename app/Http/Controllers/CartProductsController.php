@@ -3,17 +3,22 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Application\Commands\CartProductRemoveCommand;
-use App\Application\Commands\CartProductStoreCommand;
-use App\Application\Handlers\CartProductRemoveHandler;
-use App\Application\Handlers\CartProductStoreHandler;
+use App\Application\Cart\Commands\CartProductRemoveCommand;
+use App\Application\Cart\Commands\CartProductStoreCommand;
+use App\Application\Cart\Commands\CartProductUpdateCommand;
+use App\Application\Cart\Handlers\CartProductRemoveHandler;
+use App\Application\Cart\Handlers\CartProductStoreHandler;
+use App\Application\Cart\Handlers\CartProductUpdateHandler;
 use App\Domain\Cart\Exceptions\CartNotFoundException;
 use App\Domain\Cart\Exceptions\CartProductsCapacityExceededException;
 use App\Domain\Cart\Exceptions\DependencyNotLoadedException;
 use App\Domain\Cart\Exceptions\DiscountInapplicableException;
+use App\Domain\Cart\Exceptions\ProductAlreadyInCartException;
 use App\Domain\Cart\Exceptions\ProductNotFoundException;
+use App\Domain\Cart\Exceptions\ProductNotInCartException;
 use App\Http\Requests\CartProductRemoveRequest;
 use App\Http\Requests\CartProductStoreRequest;
+use App\Http\Requests\CartProductUpdateRequest;
 use Illuminate\Http\Response;
 
 class CartProductsController extends Controller
@@ -27,6 +32,7 @@ class CartProductsController extends Controller
      * @throws DiscountInapplicableException
      * @throws ProductNotFoundException
      * @throws DependencyNotLoadedException
+     * @throws ProductAlreadyInCartException
      */
     public function store(
         CartProductStoreRequest $request,
@@ -44,9 +50,26 @@ class CartProductsController extends Controller
         return response()->noContent();
     }
 
-    public function update()
+    /**
+     * @throws CartNotFoundException
+     * @throws DiscountInapplicableException
+     * @throws DependencyNotLoadedException
+     * @throws ProductNotInCartException
+     */
+    public function update(
+        CartProductUpdateRequest $request,
+        CartProductUpdateHandler $handler,
+    ): Response
     {
-        // TODO
+        $command = new CartProductUpdateCommand(
+            $request->validated('cart_id'),
+            $request->validated('product_id'),
+            $request->validated('quantity'),
+        );
+
+        $handler->handle($command);
+
+        return response()->noContent();
     }
 
     /**

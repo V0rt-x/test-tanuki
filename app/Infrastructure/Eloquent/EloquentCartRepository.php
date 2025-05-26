@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Eloquent;
 
+use App\Application\Cart\Mappers\CartMapper;
 use App\Domain\Cart\Models\Cart;
 use App\Domain\Cart\Models\CartProduct;
 use App\Domain\Cart\Repositories\CartRepositoryInterface;
@@ -17,9 +18,11 @@ class EloquentCartRepository implements CartRepositoryInterface
      * @param int $id
      * @return Cart|null
      */
-    public function get(int $id): ?Cart
+    public function getUnordered(int $id): ?Cart
     {
-        $eloquentCart = EloquentCart::where('id', $id)->first();
+        $eloquentCart = EloquentCart::where('id', $id)
+            ->whereNull('order_id')
+            ->first();
 
         return $eloquentCart ? $this->eloquentToDomain($eloquentCart) : null;
     }
@@ -29,16 +32,31 @@ class EloquentCartRepository implements CartRepositoryInterface
      * @param int $id
      * @return Cart|null
      */
-    public function withProductsAndPromocode(int $id): ?Cart
+    public function unorderedWithProductsAndPromocode(int $id): ?Cart
     {
-        $eloquentCart = EloquentCart::where('id', $id)->with(['cartProducts', 'promocode.discount'])->first();
+        $eloquentCart = EloquentCart::with(['cartProducts', 'promocode.discount'])
+            ->where('id', $id)
+            ->whereNull('order_id')
+            ->first();
 
         return $eloquentCart ? $this->eloquentToDomain($eloquentCart) : null;
     }
 
-    public function createEmpty(Cart $eloquentCart): Cart
+    public function unorderedWithProductsAndPromocodeByUserId(int $userId): ?Cart
     {
-        $eloquentCart = EloquentCart::create();
+        $eloquentCart = EloquentCart::with(['cartProducts', 'promocode.discount'])
+            ->where('user_id', $userId)
+            ->whereNull('order_id')
+            ->first();
+
+        return $eloquentCart ? $this->eloquentToDomain($eloquentCart) : null;
+    }
+
+    public function createEmpty(Cart $cart): Cart
+    {
+        $eloquentCart = EloquentCart::firstOrCreate([
+            'user_id' => $cart->getUserId(),
+        ]);
 
         return $this->eloquentToDomain($eloquentCart);
     }
@@ -73,30 +91,6 @@ class EloquentCartRepository implements CartRepositoryInterface
 
     private function eloquentToDomain(EloquentCart $eloquentCart): Cart
     {
-        if ($eloquentCart->relationLoaded('cartProducts')) {
-            $cartProducts = $eloquentCart->cartProducts->map(fn(object $cartProduct) => new CartProduct(
-                $cartProduct->product_id,
-                $cartProduct->quantity,
-                $cartProduct->base_price,
-                $cartProduct->cart_id,
-                $cartProduct->final_price,
-                $cartProduct->id,
-            ))->toArray();
-        }
-
-        if ($eloquentCart->relationLoaded('promocode') && $eloquentCart->promocode !== null) {
-            $promocode = new Promocode(
-                $eloquentCart->promocode->code,
-                $eloquentCart->promocode->discount_id,
-                $eloquentCart->promocode->id,
-            );
-        }
-
-        return new Cart(
-            $eloquentCart->id,
-            $cartProducts ?? [],
-            $eloquentCart->promocode_id,
-            $promocode ?? null,
-        );
+        return CartMapper::fromEloquent($eloquentCart);
     }
 }

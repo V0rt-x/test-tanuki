@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Application\Handlers;
+namespace App\Application\Cart\Handlers;
 
-use App\Application\Commands\CartGetCommand;
+use App\Application\Cart\Commands\CartGetCommand;
 use App\Domain\Cart\Exceptions\CartNotFoundException;
 use App\Domain\Cart\Models\Cart;
 use App\Domain\Cart\Repositories\CartRepositoryInterface;
@@ -22,7 +22,7 @@ class CartGetHandler
      */
     public function handle(CartGetCommand $command): Cart
     {
-        $cart = $this->cartRepository->withProductsAndPromocode($command->cartId);
+        $cart = $this->cartRepository->unorderedWithProductsAndPromocode($command->cartId);
         if (null === $cart) {
             throw new CartNotFoundException(sprintf('Cart %s not found', $command->cartId));
         }

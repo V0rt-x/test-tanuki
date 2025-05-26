@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Application\Commands\CartPromocodeApplyCommand;
-use App\Application\Commands\CartPromocodeRemoveCommand;
-use App\Application\Handlers\CartPromocodeApplyHandler;
-use App\Application\Handlers\CartPromocodeRemoveHandler;
+use App\Application\Cart\Commands\CartPromocodeApplyCommand;
+use App\Application\Cart\Commands\CartPromocodeRemoveCommand;
+use App\Application\Cart\Handlers\CartPromocodeApplyHandler;
+use App\Application\Cart\Handlers\CartPromocodeRemoveHandler;
 use App\Domain\Cart\Exceptions\CartNotFoundException;
 use App\Domain\Cart\Exceptions\DependencyNotLoadedException;
 use App\Domain\Cart\Exceptions\DiscountInapplicableException;

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cart extends Model
 {
+    protected $fillable = ['user_id'];
+
     public function promocode(): BelongsTo
     {
         return $this->belongsTo(Promocode::class);

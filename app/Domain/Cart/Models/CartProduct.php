@@ -34,9 +34,11 @@ class CartProduct
         return $this->id;
     }
 
-    public function setQuantity(int $quantity): void
+    public function setQuantity(int $quantity): self
     {
         $this->quantity = $quantity;
+
+        return $this;
     }
 
     public function setCartId(?int $cartId): self
@@ -74,5 +76,10 @@ class CartProduct
     public function resetDiscount(): void
     {
         $this->finalPrice = $this->basePrice;
+    }
+
+    public function addQuantity(int $value): void
+    {
+        $this->quantity += $value;
     }
 }

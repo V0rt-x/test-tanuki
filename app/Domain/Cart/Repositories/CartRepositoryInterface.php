@@ -7,11 +7,13 @@ use App\Domain\Cart\Models\Cart;
 
 interface CartRepositoryInterface
 {
-    public function get(int $id): ?Cart;
+    public function getUnordered(int $id): ?Cart;
 
-    public function createEmpty(Cart $eloquentCart): Cart;
+    public function createEmpty(Cart $cart): Cart;
 
     public function save(Cart $cart): void;
 
-    public function withProductsAndPromocode(int $id): ?Cart;
+    public function unorderedWithProductsAndPromocode(int $id): ?Cart;
+
+    public function unorderedWithProductsAndPromocodeByUserId(int $userId): ?Cart;
 }

@@ -42,4 +42,9 @@ class Promocode
     {
         return $this->discount;
     }
+
+    public function isApplicable(): bool
+    {
+        return null !== $this->getDiscount();
+    }
 }

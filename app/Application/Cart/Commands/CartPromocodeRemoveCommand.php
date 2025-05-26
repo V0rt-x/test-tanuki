@@ -1,12 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Application\Commands;
+namespace App\Application\Cart\Commands;
 
-readonly class CartGetCommand
+class CartPromocodeRemoveCommand
 {
     public function __construct(
         public int $cartId,
+        public string $promocode,
     )
     {
 

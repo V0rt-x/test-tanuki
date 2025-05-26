@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Rules\RussianPhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
-class CartCreateRequest extends FormRequest
+class OrderCreateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,7 +24,8 @@ class CartCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'required|int|min:0',
+            'user_id' => 'required|int|min:1',
+            'phone' => ['required', new RussianPhoneNumber],
         ];
     }
 }

@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CartCreateRequest extends FormRequest
+class OrderGetRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -13,6 +13,13 @@ class CartCreateRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'order_id' => (int)$this->route('order_id'),
+        ]);
     }
 
     /**
@@ -23,7 +30,7 @@ class CartCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'required|int|min:0',
+            //
         ];
     }
 }

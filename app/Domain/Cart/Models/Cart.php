@@ -13,17 +13,22 @@ use App\Domain\Discount\Models\Promocode;
 class Cart
 {
     const MAX_PRODUCT_CAPACITY = 30; // TODO config
+    const MIN_TOTAL_FINAL_PRICE = 100000; // TODO config
 
     private bool $isChanged = false;
 
     /**
+     * @param int $user_id
      * @param int|null $id
+     * @param int|null $orderId
      * @param array<CartProduct> $cartProducts
      * @param int|null $promocodeId
      * @param Promocode|null $promocode
      */
     public function __construct(
+        private int        $user_id,
         private ?int       $id = null,
+        private ?int       $orderId = null,
         private array      $cartProducts = [],
         private ?int       $promocodeId = null,
         private ?Promocode $promocode = null,
@@ -58,6 +63,17 @@ class Cart
         return $this->promocode;
     }
 
+    public function getProduct(int $productId): ?CartProduct
+    {
+        foreach ($this->cartProducts as $cartProduct) {
+            if ($cartProduct->getProductId() === $productId) {
+                return $cartProduct;
+            }
+        }
+
+        return null;
+    }
+
     public function hasProduct(int $productId): bool
     {
         foreach ($this->cartProducts as $cartProduct) {
@@ -77,18 +93,27 @@ class Cart
     {
         $this->changed();
 
-        foreach ($this->cartProducts as $cartProduct) {
-            if ($cartProduct->getProductId() === $newCartProduct->getProductId()) {
-                $cartProduct->setQuantity($cartProduct->getQuantity() + $newCartProduct->getQuantity());
-                return;
-            }
-        }
-
-        if (count($this->cartProducts) >= self::MAX_PRODUCT_CAPACITY) {
-            throw new CartProductsCapacityExceededException(sprintf('Cart products max capacity "%s" exceeded.', self::MAX_PRODUCT_CAPACITY));
+        if (count($this->cartProducts) + 1 >= self::MAX_PRODUCT_CAPACITY) {
+            throw new CartProductsCapacityExceededException(sprintf('Cart max product capacity "%s" reached.', self::MAX_PRODUCT_CAPACITY));
         }
 
         $this->cartProducts[] = $newCartProduct->setCartId($this->id);
+    }
+
+    public function updateProduct(CartProduct $updatingCartProduct): void
+    {
+        $this->changed();
+
+        $cartProducts = [];
+        foreach ($this->cartProducts as $cartProduct) {
+            if ($cartProduct->getProductId() === $updatingCartProduct->getProductId()) {
+                $cartProducts[] = $updatingCartProduct;
+            } else {
+                $cartProducts[] = $cartProduct;
+            }
+        }
+
+        $this->cartProducts = $cartProducts;
     }
 
     public function removeProduct(int $productId): void
@@ -226,5 +251,25 @@ class Cart
     public function getPromocodeId(): ?int
     {
         return $this->promocodeId;
+    }
+
+    public function getUserId(): int
+    {
+        return $this->user_id;
+    }
+
+    public function getOrderId(): ?int
+    {
+        return $this->orderId;
+    }
+
+    public function isOrdered(): bool
+    {
+        return $this->orderId !== null;
+    }
+
+    public function canBeOrdered(): bool
+    {
+        return !$this->isOrdered() && $this->totalFinalSum() >= self::MIN_TOTAL_FINAL_PRICE;
     }
 }

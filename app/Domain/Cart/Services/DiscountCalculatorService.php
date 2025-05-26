@@ -27,7 +27,7 @@ class DiscountCalculatorService
     {
         $cart->resetDiscounts();
 
-        if ($cart->applyPromocode()) {
+        if ($cart->getPromocode()->isApplicable() && $cart->applyPromocode()) {
             return $cart;
         }
 

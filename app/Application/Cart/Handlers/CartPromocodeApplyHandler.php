@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Application\Handlers;
+namespace App\Application\Cart\Handlers;
 
-use App\Application\Commands\CartPromocodeApplyCommand;
+use App\Application\Cart\Commands\CartPromocodeApplyCommand;
 use App\Domain\Cart\Exceptions\CartNotFoundException;
 use App\Domain\Cart\Exceptions\DependencyNotLoadedException;
 use App\Domain\Cart\Exceptions\DiscountInapplicableException;
@@ -39,7 +39,7 @@ class CartPromocodeApplyHandler
             throw new PromocodeNotFoundException(sprintf('Promocode "%s" not found', $command->promocode));
         }
 
-        $cart = $this->cartRepository->withProductsAndPromocode($command->cartId);
+        $cart = $this->cartRepository->unorderedWithProductsAndPromocode($command->cartId);
         if (null === $cart) {
             throw new CartNotFoundException(sprintf('Cart "%s" not found', $command->cartId));
         }

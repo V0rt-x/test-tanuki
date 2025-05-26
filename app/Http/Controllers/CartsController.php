@@ -3,31 +3,49 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Application\Commands\CartCreateCommand;
-use App\Application\Commands\CartGetCommand;
-use App\Application\Handlers\CartCreateHandler;
-use App\Application\Handlers\CartGetHandler;
+use App\Application\Cart\Commands\CartCreateCommand;
+use App\Application\Cart\Commands\CartGetByFilterCommand;
+use App\Application\Cart\Commands\CartGetCommand;
+use App\Application\Cart\Handlers\CartCreateHandler;
+use App\Application\Cart\Handlers\CartGetByFilterHandler;
+use App\Application\Cart\Handlers\CartGetHandler;
 use App\Domain\Cart\Exceptions\CartNotFoundException;
 use App\Domain\Cart\Exceptions\DependencyNotLoadedException;
 use App\Domain\Cart\Models\CartProduct;
 use App\Http\Requests\CartCreateRequest;
+use App\Http\Requests\CartGetByFilterRequest;
 use App\Http\Requests\CartGetRequest;
+use App\Http\Resources\CartResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 class CartsController extends Controller
 {
+    public function create(
+        CartCreateRequest $request,
+        CartCreateHandler $handler
+    ): Response
+    {
+        $command = new CartCreateCommand(
+            (int)$request->validated('user_id')
+        );
+
+        $handler->handle($command);
+
+        return response()->noContent();
+    }
+
     /**
+     * Возможно, стоит свести к одному методу с getByFilter
      * @param CartGetRequest $request
      * @param CartGetHandler $handler
-     * @return JsonResponse
+     * @return CartResource
      * @throws CartNotFoundException
-     * @throws DependencyNotLoadedException
      */
     public function get(
         CartGetRequest $request,
         CartGetHandler $handler
-    ): JsonResponse
+    ): CartResource
     {
         $command = new CartGetCommand(
             $request->validated('cart_id')
@@ -35,32 +53,26 @@ class CartsController extends Controller
 
         $cart = $handler->handle($command);
 
-        return response()->json([
-            'id' => $cart->getId(),
-            'cart_products' => array_map(fn(CartProduct $cartProduct) => [
-                'product_id' => $cartProduct->getProductId(),
-                'base_price' => $cartProduct->getBasePrice(),
-                'final_price' => $cartProduct->getFinalPrice(),
-            ], $cart->getCartProducts()),
-            'promocode' => $cart->getPromocode() ? [
-                'id' => $cart->getPromocode()->getId(),
-                'code' => $cart->getPromocode()->getCode(),
-            ] : null,
-            'discount' => [], // TODO
-            'total_base_sum' => $cart->totalBaseSum(),
-            'total_final_sum' => $cart->totalFinalSum(),
-        ]);
+        return CartResource::make($cart);
     }
 
-    public function create(
-        CartCreateRequest $request,
-        CartCreateHandler $handler
-    ): Response
+    /**
+     * @param CartGetByFilterRequest $request
+     * @param CartGetByFilterHandler $handler
+     * @return CartResource
+     * @throws CartNotFoundException
+     */
+    public function getByFilter(
+        CartGetByFilterRequest $request,
+        CartGetByFilterHandler $handler
+    ): CartResource
     {
-        $command = new CartCreateCommand();
+        $command = new CartGetByFilterCommand(
+            (int)$request->validated('user_id')
+        );
 
-        $handler->handle($command);
+        $cart = $handler->handle($command);
 
-        return response()->noContent();
+        return CartResource::make($cart);
     }
 }

@@ -1,13 +1,14 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Application\Handlers;
+namespace App\Application\Cart\Handlers;
 
-use App\Application\Commands\CartProductStoreCommand;
+use App\Application\Cart\Commands\CartProductStoreCommand;
 use App\Domain\Cart\Exceptions\CartNotFoundException;
 use App\Domain\Cart\Exceptions\CartProductsCapacityExceededException;
 use App\Domain\Cart\Exceptions\DependencyNotLoadedException;
 use App\Domain\Cart\Exceptions\DiscountInapplicableException;
+use App\Domain\Cart\Exceptions\ProductAlreadyInCartException;
 use App\Domain\Cart\Exceptions\ProductNotFoundException;
 use App\Domain\Cart\Models\CartProduct;
 use App\Domain\Cart\Repositories\CartRepositoryInterface;
@@ -31,6 +32,7 @@ class CartProductStoreHandler
      * @throws CartProductsCapacityExceededException
      * @throws DiscountInapplicableException
      * @throws DependencyNotLoadedException
+     * @throws ProductAlreadyInCartException
      */
     public function handle(CartProductStoreCommand $command): void
     {
@@ -39,16 +41,20 @@ class CartProductStoreHandler
             throw new ProductNotFoundException(sprintf('Product with id: "%s" not found.', $command->productId));
         }
 
-        $cart = $this->cartRepository->withProductsAndPromocode($command->cartId);
+        $cart = $this->cartRepository->unorderedWithProductsAndPromocode($command->cartId);
         if (null === $cart) {
             throw new CartNotFoundException(sprintf('Cart with id: "%s" not found.', $command->cartId));
         }
 
-        $cart->addProduct(new CartProduct(
-            $product->getId(),
-            $command->quantity,
-            $product->getPrice(),
-        ));
+        if (!$cart->hasProduct($product->getId())) {
+            $cart->addProduct(new CartProduct(
+                $product->getId(),
+                $command->quantity,
+                $product->getPrice(),
+            ));
+        } else {
+            throw new ProductAlreadyInCartException(sprintf('Product with id: "%s" already in cart "%s".', $command->productId, $command->cartId));
+        }
 
         if ($cart->isChanged()) {
             $cart = $this->discountCalculatorService->calculateCart($cart);

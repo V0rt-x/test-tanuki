@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Application\Commands;
+namespace App\Application\Cart\Commands;
 
-class CartPromocodeRemoveCommand
+readonly class CartPromocodeApplyCommand
 {
     public function __construct(
         public int $cartId,
