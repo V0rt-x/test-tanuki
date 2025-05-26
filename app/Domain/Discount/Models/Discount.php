@@ -48,13 +48,18 @@ class Discount
         return $this->id;
     }
 
+    public function isApplicableToCart(Cart $cart): bool
+    {
+        return $cart->getTotalBaseSum() >= $this->threshold;
+    }
+
     /**
      * @param Cart $cart
      * @throws DiscountInapplicableException
      */
     public function applyToCart(Cart $cart): void
     {
-        if ($cart->getTotalBaseSum() < $this->threshold) {
+        if (!$this->isApplicableToCart($cart)) {
             throw new DiscountInapplicableException(sprintf('Cart total sum (%s) must be more than threshold %s', $cart->getTotalBaseSum(), $this->threshold));
         }
 
@@ -73,5 +78,10 @@ class Discount
         } else {
             throw new DiscountInapplicableException(sprintf('Discount type "%s" is not valid.', $this->getType()->value));
         }
+    }
+
+    public function getThreshold(): int
+    {
+        return $this->threshold;
     }
 }

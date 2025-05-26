@@ -22,8 +22,8 @@ class CartResource extends JsonResource
             'cart_products' => CartProductResource::collection($this->resource->getCartProducts()),
             'promocode' => $this->resource->getPromocode() ? PromocodeResource::make($this->resource->getPromocode()) : null,
             'discount' => $this->resource->getDiscount() ? DiscountResource::make($this->resource->getDiscount()) : null,
-            'total_base_sum' => $this->resource->totalBaseSum(),
-            'total_final_sum' => $this->resource->totalFinalSum(),
+            'total_base_sum' => $this->resource->getTotalBaseSum(),
+            'total_final_sum' => $this->resource->getTotalFinalSum(),
         ];
     }
 }

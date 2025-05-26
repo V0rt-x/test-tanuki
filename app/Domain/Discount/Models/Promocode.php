@@ -55,4 +55,12 @@ class Promocode
     {
         $this->getDiscount()->applyToCart($cart);
     }
+
+    /**
+     * @throws DependencyNotLoadedException
+     */
+    public function isApplicableToCart(Cart $cart): bool
+    {
+        return $this->getDiscount()->isApplicableToCart($cart);
+    }
 }

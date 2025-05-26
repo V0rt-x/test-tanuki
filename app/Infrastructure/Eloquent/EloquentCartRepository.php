@@ -50,6 +50,7 @@ class EloquentCartRepository implements CartRepositoryInterface
     {
         $eloquentCart = EloquentCart::firstOrCreate([
             'user_id' => $cart->getUserId(),
+            'order_id' => null,
         ]);
 
         return $this->eloquentToDomain($eloquentCart);

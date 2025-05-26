@@ -25,7 +25,12 @@ class DiscountCalculatorService
      */
     public function calculateCart(Cart $cart): bool
     {
-        $cart->resetDiscounts();
+        $cart->resetCartProductsDiscount();
+
+        $promocode = $cart->getPromocode();
+        if (null !== $promocode && !$promocode->isApplicableToCart($cart)) {
+            $cart->removePromocode();
+        }
 
         if ($this->applyPromocodeToCart($cart)) {
             return true;
@@ -54,7 +59,7 @@ class DiscountCalculatorService
     private function applyDiscountToCart(Cart $cart): bool
     {
         $discount = $this->discountRepository->getGreatestApplicableWithoutPromocodes($cart->getTotalBaseSum());
-        if (null == $discount) {
+        if (null == $discount || !$discount->isApplicableToCart($cart)) {
             return false;
         }
 

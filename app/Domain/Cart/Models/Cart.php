@@ -168,9 +168,14 @@ class Cart
      * Добавляет скидку для применения. Чтобы применить, нужно вызвать applyDiscount()
      * @param Discount $discount
      * @return void
+     * @throws DiscountInapplicableException
      */
     public function setDiscount(Discount $discount): void
     {
+        if (!$discount->isApplicableToCart($this)) {
+            throw new DiscountInapplicableException(sprintf('Cart total sum (%s) must be more than threshold %s', $this->getTotalBaseSum(), $discount->getThreshold()));
+        }
+
         $this->changed();
 
         $this->discountId = $discount->getId();
@@ -190,9 +195,15 @@ class Cart
      * Добавляет промокод для применения. Чтобы применить, нужно вызвать applyPromocode()
      * @param Promocode $promocode
      * @return void
+     * @throws DependencyNotLoadedException
+     * @throws DiscountInapplicableException
      */
     public function setPromocode(Promocode $promocode): void
     {
+        if (!$promocode->isApplicableToCart($this)) {
+            throw new DiscountInapplicableException(sprintf('Cart total sum (%s) must be more than threshold %s', $this->getTotalBaseSum(), $promocode->getDiscount()->getThreshold()));
+        }
+
         $this->changed();
 
         $this->promocodeId = $promocode->getId();
@@ -278,10 +289,10 @@ class Cart
     }
 
     /**
-     * Отменяет все примененные скидки
+     * Отменяет все примененные к товарам скидки
      * @return void
      */
-    public function resetDiscounts(): void
+    public function resetCartProductsDiscount(): void
     {
         foreach ($this->cartProducts as $cartProduct) {
             $cartProduct->resetDiscount();
