@@ -11,6 +11,7 @@ use App\Domain\Discount\Repositories\DiscountRepositoryInterface;
 use App\Domain\Order\Exceptions\CartCannotBeOrderedException;
 use App\Domain\Order\Repositories\OrderRepositoryInterface;
 use App\Domain\Product\Gateways\ProductGatewayInterface;
+use App\Domain\Shared\Models\ValueObjects\Phone;
 use App\Infrastructure\Mock\MockProductGateway;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use PHPUnit\Framework\MockObject\Exception;
@@ -23,7 +24,7 @@ class OrderCreateHandlerTest extends TestCase
 
     public function test_order_create_successfully()
     {
-        $command = new OrderCreateCommand(555, '79999999999');
+        $command = new OrderCreateCommand(555, new Phone('79999999999'));
         $handler = $this->makeMockedHandler();
 
         $this->assertNull($handler->handle($command));
@@ -38,7 +39,7 @@ class OrderCreateHandlerTest extends TestCase
             ->method('getUnorderedByUserId')
             ->willReturn($this->makeLowPriceCart());
 
-        $command = new OrderCreateCommand(555, '79999999999');
+        $command = new OrderCreateCommand(555, new Phone('79999999999'));
         $handler = $this->makeMockedHandler($cartRepository);
 
         $this->assertNull($handler->handle($command));

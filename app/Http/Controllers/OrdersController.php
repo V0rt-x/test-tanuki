@@ -10,6 +10,8 @@ use App\Application\Order\Handlers\OrderGetHandler;
 use App\Domain\Cart\Exceptions\CartNotFoundException;
 use App\Domain\Order\Exceptions\CartCannotBeOrderedException;
 use App\Domain\Order\Exceptions\OrderNotFoundException;
+use App\Domain\Shared\Exceptions\InvalidPhoneFormatException;
+use App\Domain\Shared\Models\ValueObjects\Phone;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderGetRequest;
 use App\Http\Resources\OrderResource;
@@ -23,6 +25,7 @@ class OrdersController extends Controller
      * @return Response
      * @throws CartCannotBeOrderedException
      * @throws CartNotFoundException
+     * @throws InvalidPhoneFormatException
      */
     public function create(
         OrderCreateRequest $request,
@@ -31,7 +34,7 @@ class OrdersController extends Controller
     {
         $command = new OrderCreateCommand(
             (int)$request->validated('user_id'),
-            $request->validated('phone'),
+            new Phone($request->validated('phone')),
         );
 
         $handler->handle($command);

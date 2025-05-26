@@ -12,6 +12,7 @@ use App\Domain\Order\Exceptions\OrderNotFoundException;
 use App\Domain\Order\Models\Order;
 use App\Domain\Order\Repositories\OrderRepositoryInterface;
 use App\Domain\Product\Gateways\ProductGatewayInterface;
+use App\Domain\Shared\Models\ValueObjects\Phone;
 use App\Infrastructure\Mock\MockProductGateway;
 use PHPUnit\Framework\TestCase;
 use Tests\Helpers\Traits\CreatesCart;
@@ -32,6 +33,7 @@ class OrderGetHandlerTest extends TestCase
         $this->assertEquals(677, $order->getCartId());
         $this->assertEquals(677, $order->getCart()->getId());
         $this->assertEquals(83721, $order->getCart()->getOrderId());
+        $this->assertEquals('79999999999', $order->getPhone()->value);
         $this->assertTrue($order->getCart()->hasProduct(1));
         $this->assertTrue(!$order->getCart()->hasProduct(4));
     }
@@ -72,7 +74,7 @@ class OrderGetHandlerTest extends TestCase
             $orderRepository
                 ->method('get')
                 ->willReturn(new Order(
-                    '79999999999',
+                    new Phone('79999999999'),
                     83721,
                     677,
                     $this->makeOrderedCart()
